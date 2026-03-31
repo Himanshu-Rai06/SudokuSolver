@@ -254,7 +254,7 @@ def get_logical_step(grid):
             return {
                 'target_index': target_index,
                 'value': str(val),
-                'message': f"The only possible value here is {val}. All other numbers are blocked by its row, column, or 3x3 box!"
+                'message': f"The only remining value possible is {val}."
             }
             
     # 3. Fallback: If there are no obvious Naked Singles, use the solver to give a complex hint
@@ -266,7 +266,7 @@ def get_logical_step(grid):
                     return {
                         'target_index': (r * 9) + c,
                         'value': str(solved_grid[r][c]),
-                        'message': f"This one requires advanced deduction! By process of elimination, this must be {solved_grid[r][c]}."
+                        'message': f"This one requires advanced deduction! By Backtracking, we get {solved_grid[r][c]}."
                     }
                     
     return None # Board is full or unsolvable

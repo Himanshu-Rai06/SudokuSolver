@@ -109,11 +109,17 @@ body {
 .sudoku-grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    width: 100%;
-    aspect-ratio: 1; 
+    aspect-ratio: 1;
+    
+    /* --- THE FIX --- */
+    width: 95vw;          /* Take up 95% of the phone's screen width */
+    max-width: 450px;     /* Stop it from becoming massive on PC/Tablets */
+    margin: 0 auto;       /* Keep it perfectly centered */
+    /* --------------- */
+
     background-color: var(--bg-main);
     border: 2px solid var(--grid-box);
-    border-radius: 8px; 
+    border-radius: 8px;
     overflow: hidden;
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
@@ -468,7 +474,7 @@ body {
 /* --- TOAST NOTIFICATIONS (Minimalized) --- */
 .custom-toast {
     position: fixed;
-    bottom: 200px; 
+    bottom: 210px; 
     
     /* 🎯 1. Bulletproof Centering Base */
     left: 50%; 
@@ -533,7 +539,7 @@ body {
     display: flex !important;
     flex-direction: column !important; /* Stacked on mobile */
     align-items: center !important;
-    gap: 160px !important;
+    gap: 110px !important;
     width: 100%;
 }
 
@@ -742,6 +748,19 @@ input:checked + .slider:before {
         gap: 40px !important; /* Space between numpad and action buttons */
         width: 100%;
         max-width: 350px;
+    }
+
+    .sudoku-grid {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        aspect-ratio: 1;
+        width: 100% !important;
+
+        background-color: var(--bg-main);
+        border: 2px solid var(--grid-box);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .top-header {

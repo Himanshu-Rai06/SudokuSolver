@@ -5,6 +5,8 @@ import time
 import random
 from django.shortcuts import render
 from django.http import JsonResponse
+import os
+from pathlib import Path
 
 # Import models
 from .models import SudokuPuzzle 
@@ -26,15 +28,19 @@ def load_sudoku_dataset(filepath):
         print(f"CRITICAL ERROR loading dataset: {e}")
     return puzzles
 
-CSV_PATH = r"C:\Users\Himanshu Rai\OneDrive\Pictures\Documents\Sudoku\sudoku_showcase\sudoku.csv"
+BASE_DIR = Path(__file__).resolve().parent.parent 
+CSV_PATH = os.path.join(BASE_DIR, 'sudoku.csv')
 
-print("Booting up Python Engine...")
+print(f"Booting up Python Engine... Looking for CSV at: {CSV_PATH}")
 print("Loading Sudoku dataset into ultra-fast RAM...")
+
 GLOBAL_SUDOKU_DATASET = load_sudoku_dataset(CSV_PATH)
 if GLOBAL_SUDOKU_DATASET:
     print(f"SUCCESS: {len(GLOBAL_SUDOKU_DATASET)} puzzles loaded into memory!")
 else:
-    print("WARNING: Dataset failed to load.")
+    # If it fails, let's check the current directory to debug
+    print(f"WARNING: Dataset failed to load. Current directory is: {os.getcwd()}")
+    print(f"Files available here: {os.listdir(BASE_DIR)}")
 
 # Helper Function to prevent the "String Index Out of Range" error
 def string_to_grid(puzzle_string):

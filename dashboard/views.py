@@ -3,10 +3,10 @@ import json
 import csv
 import time
 import random
-from django.shortcuts import render
-from django.http import JsonResponse
 import os
 from pathlib import Path
+from django.shortcuts import render
+from django.http import JsonResponse
 
 # Import models
 from .models import SudokuPuzzle 
@@ -63,21 +63,35 @@ def solve_api(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            grid = data.get('board')
+            raw_grid = data.get('board')
             
-            solved_grid = solve_single_sudoku(grid) 
+            # --- FIX: CLEAN THE GRID BEFORE SENDING TO ENGINE ---
+            clean_grid = []
+            for row in raw_grid:
+                clean_row = []
+                for cell in row:
+                    # If the cell is empty, null, or a space, convert it to 0
+                    if cell in ["", " ", None, 0, "0"]:
+                        clean_row.append(0)
+                    else:
+                        clean_row.append(int(cell)) # Convert string numbers to real integers
+                clean_grid.append(clean_row)
+            
+            # Send the cleaned integer grid to the engine
+            solved_grid = solve_single_sudoku(clean_grid) 
             
             if solved_grid:
                 return JsonResponse({'solvedBoard': solved_grid})
             else:
                 return JsonResponse({'error': 'No solution possible based on your logic.'}, status=400)
         except Exception as e:
+            print(f"Solver Error: {e}")
             return JsonResponse({'error': str(e)}, status=500)
             
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 # ==========================================
-# 2. THE BENCHMARK VIEW (Lightning Fast)
+# 3. THE BENCHMARK VIEW (Lightning Fast)
 # ==========================================
 def benchmark(request):
     if request.method == 'POST':
@@ -101,7 +115,7 @@ def benchmark(request):
                 if result:
                     successful_solves += 1 
                 
-            # --- STOP STOPWATCH (This is the line that went missing!) ---
+            # --- STOP STOPWATCH ---
             end_time = time.perf_counter()
             
             # Calculate the exact math AND round the results
@@ -120,23 +134,40 @@ def benchmark(request):
             
     return JsonResponse({'error': 'Invalid request'}, status=405)
 
+# ==========================================
+# 4. RANDOM PUZZLE GENERATOR
+# ==========================================
 def get_random_sudoku(request):
-    count = SudokuPuzzle.objects.count()
-    if count == 0:
-        return JsonResponse({'error': 'No puzzles found!'}, status=404)
+    # --- FIX: PULL FROM CSV RAM INSTEAD OF EMPTY SQLITE DB ---
+    if not GLOBAL_SUDOKU_DATASET:
+        return JsonResponse({'error': 'No puzzles found in memory!'}, status=404)
     
-    random_index = random.randint(0, count - 1)
-    random_puzzle = SudokuPuzzle.objects.all()[random_index]
+    # Pick a random puzzle string directly from the 1-million puzzle CSV list
+    random_puzzle_string = random.choice(GLOBAL_SUDOKU_DATASET)
     
-    return JsonResponse({'puzzle': random_puzzle.puzzle_string})
+    return JsonResponse({'puzzle': random_puzzle_string})
 
+# ==========================================
+# 5. GET HINT
+# ==========================================
 def get_hint(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             current_grid = data.get('board')
             
-            hint_data = get_logical_step(current_grid)
+            # --- FIX: CLEAN GRID FOR HINTS AS WELL ---
+            clean_grid = []
+            for row in current_grid:
+                clean_row = []
+                for cell in row:
+                    if cell in ["", " ", None, 0, "0"]:
+                        clean_row.append(0)
+                    else:
+                        clean_row.append(int(cell))
+                clean_grid.append(clean_row)
+
+            hint_data = get_logical_step(clean_grid)
             
             if hint_data:
                 return JsonResponse(hint_data)
@@ -144,6 +175,7 @@ def get_hint(request):
                 return JsonResponse({'error': 'No logical moves found or board is full.'}, status=400)
                 
         except Exception as e:
+            print(f"Hint Error: {e}")
             return JsonResponse({'error': str(e)}, status=500)
             
     return JsonResponse({'error': 'Invalid request method'}, status=400)

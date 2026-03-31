@@ -1,0 +1,1239 @@
+/* --- SUDOKU: THE CLEAN ONE (MINIMALIST THEME) --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+
+/* 1. Default Dark Mode Colors */
+:root, :root[data-theme="dark"] {
+    --bg-main: #121213;        /* Deep, soft charcoal */
+    --bg-surface: #1e1e20;     /* Slightly lighter for buttons/numpad */
+    --bg-elevated: #2d2a2a; 
+    --bg-given: #2a2a2d;
+    --text-main: #f5f7f5;      /* Soft white */
+    --text-muted: #bebec0;     /* Greyed out text */
+    --accent: #c7cdfd;         /* A soft, premium indigo/purple */
+    --accent-glow: rgba(94, 92, 230, 0.15);
+    
+    --grid-line: #2c2c2e;      /* Very subtle 1x1 grid lines */
+    --grid-box: #48484a;       /* Slightly thicker 3x3 box lines */
+    
+    --error-color: #f14c43;    
+    --success-color: #60d171;
+}
+
+/* Light Mode Overrides */
+:root[data-theme="light"] {
+    --bg-main: #efe9d7;        /* Soft off-white background */
+    --bg-surface: #fff9eb;     /* Pure white for numpad/modals */
+    --bg-elevated: #e5e5ea;    /* Grey for hover states */
+    --bg-given: #e2e2d9;
+    --text-main: #1c1c1e;      /* Almost black text */
+    --text-muted: #353536;     /* Greyed out text */
+    --accent: #071739;         /* Slightly darker indigo for better contrast */
+    --accent-glow: rgba(88, 86, 214, 0.15);
+    
+    --grid-line: #494b4b;      /* Light grey 1x1 grid lines */
+    --grid-box: #3a3a3c;       /* Dark, crisp 3x3 box lines */
+    
+    --error-color: #ff3b30;    
+    --success-color: #34c759;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent; 
+    color: var(--text-muted);
+}
+
+.app-container {
+    max-width: 400px;
+    margin: auto;
+    padding: 10px;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; 
+    display: flex;
+    justify-content: center;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transition */
+}
+
+
+/* --- TOP BAR --- */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+}
+
+.app-title {
+    font-weight: 600;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.icon-btn:active { opacity: 0.5; }
+
+/* --- THE SUDOKU GRID --- */
+.game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Spreads out grid, numpad, and nav */
+}
+
+.sudoku-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    flex: 1; /* Pushes numpad down */
+}
+
+.sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    width: 100%;
+    aspect-ratio: 1; 
+    background-color: var(--bg-main);
+    border: 2px solid var(--grid-box);
+    border-radius: 8px; 
+    overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Hiding the ugly input box styling */
+.cell {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
+    color: var(--text-main);
+    font-size: clamp(1.2rem, 5vw, 1.8rem); 
+    text-align: center;
+    outline: none;
+    caret-color: transparent; 
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.3s ease;
+}
+
+/* Thicker lines for the 3x3 boxes (Added dynamically via JS) */
+.cell.border-right { border-right: 2px solid var(--grid-box); }
+.cell.border-bottom { border-bottom: 2px solid var(--grid-box); }
+
+/* --- GRID HIGHLIGHTS (Calm & Minimal) --- */
+.cell.highlight {
+    background-color: var(--bg-surface);
+}
+
+.cell.highlight-active {
+    background-color: var(--accent-glow);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.cell.error {
+    color: var(--error-color) !important;
+    background-color: rgba(255, 69, 58, 0.1) !important;
+    animation: gentle-shake 0.3s ease;
+}
+
+.cell.solved-text {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.cell.given {
+    background-color: var(--bg-given);
+    font-weight: 700; /* Makes the starting numbers bold */
+    cursor: not-allowed; /* Changes the mouse pointer so users know they can't click it */
+}
+
+/* The cell that gets the hint answer */
+.cell.hint-target {
+    background-color: var(--success-color) !important;
+    color: white !important;
+    transition: all 0.3s ease;
+    transform: scale(1.05); /* Slight pop effect */
+    z-index: 10;
+}
+
+/* The row/col/box cells that explain WHY */
+.cell.hint-reason {
+    background-color: var(--accent-glow) !important;
+    transition: background-color 0.3s ease;
+}
+
+/* --- MOBILE NUMPAD --- */
+.numpad-container {
+    padding: 0 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.numpad-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.num-btn {
+    flex: 1;
+    aspect-ratio: 1.5; 
+    border-radius: 12px;
+    border: 1px solid black;
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    font-size: 1.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.3s ease, color 0.3s ease;
+}
+
+.num-btn:active {
+    background-color: var(--bg-elevated);
+    transform: scale(0.92); 
+}
+
+.clear-cell-btn {
+    color: var(--text-muted);
+}
+
+/* --- BOTTOM ACTION BAR --- */
+.action-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); /* Supports iPhone home bar */
+    border-top: 1px solid var(--bg-surface);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.action-btn i { font-size: 1.2rem; }
+.action-btn span { font-size: 0.75rem; font-weight: 500; }
+.action-btn:hover, .action-btn:active { color: var(--text-main); }
+
+/* --- MODAL / BOTTOM SHEET (For Benchmark & Info) --- */
+/* --- SIDEBAR OVERLAY --- */
+.modal-overlay {
+    position: fixed; 
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Slightly darker backdrop */
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: none; 
+    justify-content: flex-end; /* 🎯 Moves panel to the RIGHT */
+    align-items: stretch; 
+}
+
+.modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* --- SIDEBAR PANEL (Replaces modal-sheet) --- */
+.sidebar-panel {
+    background: var(--bg-main); /* Seamless with your theme */
+    border-left: 1px solid rgba(255, 255, 255, 0.05); /* Subtle edge */
+    width: 100%;
+    max-width: 400px; /* Slightly wider for better text fit */
+    height: 100%;
+    padding: 3rem 2rem 2rem; 
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.6); /* Deep shadow on the left */
+    overflow-y: auto; 
+    
+    /* 🎯 Slide in from right */
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); /* Snappier easing */
+    position: relative;
+}
+
+.modal-overlay.active .sidebar-panel {
+    transform: translateX(0);
+}
+
+/* Fixed Close Button */
+.close-sidebar {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 32px;
+    color: var(--text-muted); /* Swapped to variable */
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+    line-height: 1;
+}
+
+.close-sidebar:hover {
+    color: var(--text-main); /* Swapped to variable */
+    transform: scale(1.1);
+}
+
+/* Header Adjustments */
+.modal-header { text-align: center; margin-bottom: 3rem; }
+.modal-header h2 { font-size: 1.8rem; margin-bottom: 0.25rem; color: var(--text-main); font-weight: 600; letter-spacing: 1px; } /* Swapped to variable */
+.modal-header p { color: var(--text-muted); font-size: 0.95rem; } /* Swapped to variable */
+.credits { margin-top: 0.5rem; font-size: 0.85rem; color: var(--accent) !important; font-weight: 500; opacity: 0.8; } /* Using your accent color! */ 
+
+
+/* --- ACCORDION SECTIONS (Minimalist UI) --- */
+/* --- ACCORDION SECTIONS (True Smooth Animation) --- */
+/* MAIN ACCORDION CONTAINER (new design applied) */
+.info-accordion {
+    background-color: var(--bg-elevated); /* Adapts to light/dark automatically! */
+    border-radius: 10px;
+    margin-bottom: 14px;
+    
+    /* Using your grid-line variable creates a perfect subtle border in both themes */
+    border: 1px solid var(--grid-line); 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12); /* Softened shadow so it doesn't look harsh in light mode */
+    
+    overflow: hidden;
+}
+
+/* remove old divider rule */
+.info-accordion:last-of-type { 
+    margin-bottom: 0;
+}
+
+
+/* SUMMARY (keep behavior, adjust padding) */
+.info-accordion summary {
+    padding: 1rem 1.2rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text-main); /* Adapts to light/dark */
+    cursor: pointer;
+    list-style: none; 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.info-accordion summary::-webkit-details-marker { 
+    display: none; 
+}
+
+/* Changed hover state to use your accent color for a more premium feel */
+.info-accordion summary:hover,
+.info-accordion.is-active summary {
+    color: var(--accent); 
+}
+
+/* chevron */
+.info-accordion summary::after {
+    content: '\25BC'; 
+    font-size: 0.6rem;
+    color: var(--text-muted); /* Adapts to light/dark */
+    position: absolute;
+    right: 12px;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+}
+
+.info-accordion.is-active summary::after {
+    transform: rotate(-180deg);
+    color: var(--accent);
+}
+
+
+/* CONTENT (merged padding logic) */
+.accordion-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 1.2rem; 
+
+    color: var(--text-muted); /* Adapts to light/dark */
+    font-size: 0.95rem;
+    line-height: 1.6;
+
+    transition: 
+        max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+        opacity 0.3s ease, 
+        padding 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.info-accordion.is-active .accordion-content {
+    opacity: 1;
+    padding: 0.5rem 1.2rem 1.2rem 1.2rem; /* new spacing */
+}
+
+@keyframes slideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-15px) scaleY(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+    }
+}
+
+/* --- BENCHMARK TOOLS --- */
+.mini-stats { 
+    display: flex; 
+    gap: 0.8rem; 
+    margin-bottom: 1.5rem; 
+}
+
+.mini-stat { 
+    flex: 1; 
+    background: rgba(255, 255, 255, 0.03); /* Glassy dark background */
+    padding: 1rem 0.5rem; 
+    border-radius: 12px; 
+    text-align: center; 
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mini-stat span { 
+    display: block; 
+    font-size: 0.75rem; 
+    color: #777; 
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mini-stat strong { 
+    font-size: 1.2rem; 
+    color: #fff; 
+}
+
+.benchmark-run-box { display: flex; gap: 0.8rem; }
+.benchmark-run-box input {
+    width: 80px; 
+    padding: 0.8rem; 
+    border-radius: 10px; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    background: rgba(0, 0, 0, 0.2); 
+    color: white; 
+    text-align: center;
+    font-size: 1rem;
+    outline: none;
+}
+.benchmark-run-box input:focus {
+    border-color: var(--accent);
+}
+
+.btn-primary {
+    flex: 1; 
+    border: none; 
+    border-radius: 10px; 
+    background: var(--accent); 
+    color: white; 
+    font-weight: 600; 
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+.btn-primary:active {
+    transform: scale(0.97);
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+
+/* --- TOAST NOTIFICATIONS (Minimalized) --- */
+.custom-toast {
+    position: fixed;
+    bottom: 200px; 
+    
+    /* 🎯 1. Bulletproof Centering Base */
+    left: 50%; 
+    
+    /* 🎯 2. Size Limits: Hug the text, but never overflow the phone screen */
+    width: max-content; 
+    max-width: 85vw; /* Will never be wider than 85% of the screen */
+    
+    background: var(--bg-elevated);
+    color: var(--text-main);
+    padding: 1rem 1.5rem; 
+    border-radius: 12px;
+    font-weight: 500; 
+    font-size: 0.9rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    border: 1px solid var(--grid-line);
+    
+    /* Ensure long text wraps nicely instead of breaking out */
+    text-align: center;
+    word-wrap: break-word;
+    
+    /* 🎯 3. COMBINED TRANSFORM: Center it (-50%) AND shrink it (scale 0.8) simultaneously */
+    transform: translateX(-50%) scale(0.8); 
+    opacity: 0; 
+    
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
+    z-index: 50; 
+}
+
+.custom-toast.show { 
+    /* 🎯 4. COMBINED TRANSFORM: Keep it centered while expanding it */
+    transform: translateX(-50%) scale(1.1); 
+    opacity: 1; 
+}
+
+/* Keep your icons exactly as they are */
+.toast-success i { color: var(--success-color); margin-right: 0.5rem; }
+.toast-error i { color: var(--error-color); margin-right: 0.5rem; }
+/* =========================================
+   FORCE LAYOUT OVERRIDES (BOTTOM OF FILE)
+   ========================================= */
+
+/* 1. Header Fix */
+.top-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 450px !important; /* Keeps it tight on mobile */
+    margin: 0 auto 30px auto !important;
+}
+
+.app-title h1 {
+    margin: 0 !important;
+    font-size: 2rem;
+    letter-spacing: 2px;
+}
+
+/* 2. Main Content Wrapper */
+.main-content {
+    display: flex !important;
+    flex-direction: column !important; /* Stacked on mobile */
+    align-items: center !important;
+    gap: 160px !important;
+    width: 100%;
+}
+
+/* 3. Board & Numpad Layouts */
+.board-section {
+    width: 100%;
+    max-width: 450px;
+    flex-shrink: 0;
+}
+
+.controls-section {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 20px !important;
+    width: 100%;
+    max-width: 350px;
+}
+
+.numpad {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 12px !important;
+    width: 100%;
+}
+
+/* 4. Action Buttons Fix */
+.action-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important; /* Centers them together */
+    align-items: center !important;
+    width: 100%;
+    gap: 40px !important; /* Gives them nice, even breathing room */
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: #555757; 
+    cursor: pointer;
+}
+
+
+
+/* --- SETTINGS MODAL STYLES --- */
+/* --- SLEEK SETTINGS MODAL CONTAINER --- */
+#settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    /* display is handled by JS */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* The actual box */
+#settings-modal .modal-sheet {
+    display: block; 
+    background: #1a1a1a; 
+    width: 90%;
+    max-width: 380px;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: white;
+    
+    /* --- THE FIXES --- */
+    position: relative; 
+    bottom: auto; /* Overrides any 'bottom: 0' from the generic modal class */
+    margin: auto; /* Forces strict centering */
+    transform: scale(1) translateY(0); /* Sets the final resting place */
+    
+    /* Added 'forwards' so the animation freezes at 100% and doesn't snap back */
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Updated to prevent it from dropping during the animation */
+@keyframes popIn {
+    0% { transform: scale(0.8) translateY(0); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+#settings-modal .modal-header h2 {
+    margin: 0 0 20px 0;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Beautiful Action Buttons */
+#settings-modal .menu-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 12px;
+    border: none;
+    background: #2a2a2a;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+#settings-modal .menu-btn:hover {
+    background: #3a3a3a;
+    transform: translateY(-2px);
+}
+
+#settings-modal .secondary-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #aaa;
+    margin-top: 15px;
+}
+
+#settings-modal .secondary-btn:hover {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+    border-color: rgba(255, 68, 68, 0.3);
+}
+
+/* --- SLEEK TOGGLE SWITCHES --- */
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 10px;
+    font-size: 16px;
+    color: var(--text-color);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .3s;
+    border-radius: 30px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #ffffff; /* Turns white when active */
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: #1a1a1a; /* Dark dot inside white slider */
+}
+
+/* For Light Theme (if you have one) */
+[data-theme="light"] input:checked + .slider {
+    background-color: #1a1a1a;
+}
+[data-theme="light"] input:checked + .slider:before {
+    background-color: #ffffff;
+}
+
+/* 5. Desktop Layout - The Final Polish */
+@media (min-width: 850px) {
+    .controls-section {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important; /* Centers the numpad and action buttons together */
+        justify-content: center !important;
+        gap: 40px !important; /* Space between numpad and action buttons */
+        width: 100%;
+        max-width: 350px;
+    }
+
+    .top-header {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important; 
+        align-items: center !important;
+        gap: 80px !important; 
+        width: 100% !important;
+        margin: 0 auto 50px auto !important;
+    }
+    
+    .main-content {
+        display: flex !important;
+        flex-direction: row !important; 
+        justify-content: center !important;
+        align-items: end !important; /* Keeps the board and controls vertically aligned */
+        gap: 80px !important; /* Perfect breathing room between board and controls */
+        margin-top: 20px;
+    }
+
+    .action-buttons {
+        display: flex !important;
+        flex-direction: column !important; /* Horizontal row */
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100%;
+        max-width: 240px; /* Matches the width of the numpad perfectly */
+        gap: 30px !important;
+    }
+
+    .numpad {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important; /* 3 columns for 1-9 */
+        gap: 15px !important;
+        width: 100%;
+        max-width: 240px; /* Keeps the buttons beautifully square */
+        margin: 0 auto !important;
+    }
+
+    .num-btn{
+        aspect-ratio: 1.75;
+        font-size: 1.85rem;
+    }
+
+    .clear-cell-btn {
+        grid-column: 2 !important; /* Puts it directly in the middle column under the 8 */
+        width: 100%;
+    }
+
+    
+    .custom-toast {
+        /* Reset for Desktop: Neatly centered at the top of the screen */
+        top: auto ; 
+        bottom: 350px !important;
+        left: 67.5% !important;
+        transform: translateX(-50%) !important; 
+        
+        /* Let the box size itself naturally based on the text */
+        width: auto !important; 
+        min-width: 200px;
+        max-width: 310px;
+        z-index: 50;
+    }
+}
+
+/* The Win Animation Keyframes */
+@keyframes victoryPulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(76, 175, 80, 0); }
+    50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(76, 175, 80, 0.8); }
+    100% { transform: scale(1); box-shadow: 0 0 10px rgba(76, 175, 80, 0.4); }
+}
+
+/* The class we will apply via JavaScript */
+.board-win-state {
+    animation: victoryPulse 0.8s ease-in-out forwards;
+    border-color: #4CAF50 !important; /* Changes board border to green */
+}
+
+/* --- BACKGROUND ANIMATION CANVAS --- */
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1; /* Puts it behind your Sudoku board! */
+    pointer-events: none; /* Ensures it doesn't accidentally block mouse clicks */
+    display: block; /* Hidden by default for mobile */
+}
+
+/* Only show the canvas if the screen is desktop-sized */
+@media (min-width: 850px) {
+    #bg-canvas {
+        display: block; 
+    }
+}
+
+/* --- SAVE/LOAD SLOTS & LEADERBOARD --- */
+.save-slot {
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.save-slot:hover {
+    background: #3a3a3a;
+    transform: scale(1.02);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.save-slot.empty {
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    align-items: center;
+    justify-content: center;
+    color: #888;
+}
+
+.slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.slot-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* =========================================
+   LEADERBOARD MODAL STYLES
+   ========================================= */
+
+/* The dark background overlay */
+#leaderboard-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7); /* Darkens the screen */
+    backdrop-filter: blur(4px); /* Adds a modern blur effect */
+    display: none; /* Controlled by JS */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* Ensures it is on top of everything */
+}
+
+/* The actual popup card */
+#leaderboard-modal .modal-content {
+    background: #1a1a1a; /* Dark sleek background */
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 350px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header inside the modal */
+#leaderboard-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 12px;
+}
+
+#leaderboard-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Close 'X' Button */
+#close-leaderboard-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+#close-leaderboard-btn:hover {
+    color: #ff5c5c; /* Turns red when hovered */
+}
+
+#main-timer-display {
+    width: fit-content;
+    margin: 0 auto 15px auto; /* Centers the block, adds gap below */
+    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.08); /* Subtle premium background */
+    border-radius: 20px; /* Pill shape */
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color, #ffffff);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==========================================
+   DYNAMIC CONFIRMATION MODAL CSS
+   ========================================== */
+
+/* The main modal card */
+.dynamic-modal-content {
+    background-color: #1e1e1e; /* Matches your sleek dark settings theme */
+    border-radius: 16px;
+    padding: 30px 25px;
+    width: 90%;
+    max-width: 360px; /* Keeps it perfectly sized on desktop & mobile */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    border: 1px solid #333;
+    text-align: center;
+    position: relative;
+    color: #fff;
+    margin: auto; /* Ensures it centers within the overlay */
+}
+
+/* The "X" Close Button */
+#dynamic-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 26px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    line-height: 1;
+}
+
+#dynamic-close-btn:hover {
+    color: #fff;
+}
+
+/* Text Formatting */
+#dynamic-title {
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+#dynamic-message {
+    margin: 0 0 25px 0;
+    font-size: 0.95rem;
+    color: #aaa;
+    line-height: 1.5;
+}
+
+/* Button Layout */
+.dynamic-modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Base button styling */
+.dynamic-modal-buttons button {
+    flex: 1;
+    padding: 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Secondary Button (Restart/Hint/Cancel) */
+#dynamic-btn-secondary {
+    background-color: #333;
+    color: #ddd;
+}
+
+#dynamic-btn-secondary:hover {
+    background-color: #444;
+    color: #fff;
+}
+
+/* Primary Button (Extreme actions: Clear All/Solve) */
+#dynamic-btn-primary {
+    background-color: #d64545; /* A nice UI red for destructive/extreme actions */
+    color: #fff;
+}
+
+#dynamic-btn-primary:hover {
+    background-color: #e85656;
+}
+
+/* --- PREMIUM BENCHMARK UI --- */
+.benchmark-container {
+    padding: 10px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.benchmark-subtitle {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+/* 3-Column Grid that adapts perfectly to mobile */
+.benchmark-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+/* Adds a subtle glowing pulse when crunching data */
+.stat-card.is-crunching {
+    border-color: rgba(99, 102, 241, 0.5); /* Indigo glow */
+    animation: pulseGlow 1.5s infinite alternate;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace; /* Hacker aesthetic */
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+}
+
+.stat-unit {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* Control Panel */
+.benchmark-controls {
+    display: flex;
+    gap: 10px;
+    height: 48px;
+}
+
+.sleek-input {
+    width: 30%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #fff;
+    text-align: center;
+    font-size: 1.1rem;
+    font-family: monospace;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.sleek-input:focus { border-color: #232329; }
+
+.sleek-btn {
+    flex-grow: 1;
+    background: linear-gradient(135deg, #8b9bb4 0%, #484858 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s, opacity 0.3s;
+}
+
+.sleek-btn:active { transform: scale(0.98); }
+.sleek-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.benchmark-status {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #666;
+    height: 20px;
+    font-family: monospace;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.1); }
+    100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
+}
+
+.about-heading {
+    color: #bda9cf; /* A nice muted blue/purple to match your theme */
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+}
+
+.about-text {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.about-list {
+    color: #caced5;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    padding-left: 20px;
+}
+
+.about-list li {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.btn-download {
+    display: inline-block;
+    background-color: #424249; /* Matches your Run Test button */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-download:hover {
+    background-color: #535358;
+    color: white;
+}
+
+/* Styling for the How To Play feature list */
+.feature-list {
+    list-style: none; /* Removes standard bullet points */
+    padding: 0;
+    margin: 0;
+}
+
+.feature-list li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    color: #caced5;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.icon-feature {
+    color: var(--text-muted); /* Uses your accent blue/purple color */
+    font-size: 1.1rem;
+    margin-right: 12px;
+    margin-top: 3px; /* Pushes the icon down slightly to align with the text */
+    min-width: 20px;
+    text-align: center;
+}
